@@ -16,7 +16,6 @@
  */
 package log4j.edn.config;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -58,7 +57,7 @@ public class EDNConfiguration extends AbstractConfiguration implements Reconfigu
         byte[] buffer;
         try {
             try (final InputStream configStream = configSource.getInputStream()) {
-              json = EDNParser.parse(configSource.getInputStream());
+              json = EDNParser.parse(configStream);
               buffer = json.getBytes();
             }
             root = getObjectMapper().readTree(buffer);

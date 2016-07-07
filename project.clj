@@ -1,4 +1,4 @@
-(defproject log4j-edn-config "0.1.0"
+(defproject log4j-edn-config "0.1.1"
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
   :license {:name "Apache License 2.0"

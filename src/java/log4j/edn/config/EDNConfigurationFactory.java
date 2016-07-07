@@ -16,16 +16,19 @@
  */
 package log4j.edn.config;
 
-import org.apache.logging.log4j.core.config.Configuration;
-import org.apache.logging.log4j.core.config.ConfigurationFactory;
-import org.apache.logging.log4j.core.config.ConfigurationSource;
-import org.apache.logging.log4j.core.config.Order;
+import org.apache.logging.log4j.core.config.*;
 import org.apache.logging.log4j.core.config.plugins.Plugin;
 import org.apache.logging.log4j.core.util.Loader;
+import org.apache.logging.log4j.core.util.NetUtils;
+import org.apache.logging.log4j.util.LoaderUtil;
+import org.apache.logging.log4j.util.PropertiesUtil;
+import java.net.URI;
 
 @Plugin(name = "EDNConfigurationFactory", category = ConfigurationFactory.CATEGORY)
 @Order(6)
 public class EDNConfigurationFactory extends ConfigurationFactory {
+
+    private static ConfigurationFactory configFactory = new Factory();
 
     /**
      * The file extensions supported by this factory.
@@ -48,6 +51,7 @@ public class EDNConfigurationFactory extends ConfigurationFactory {
                 return;
             }
         }
+        ConfigurationFactory.setConfigurationFactory(configFactory);
         isActive = true;
     }
 
@@ -61,11 +65,48 @@ public class EDNConfigurationFactory extends ConfigurationFactory {
         if (!isActive) {
             return null;
         }
-        return new EDNConfiguration(source);
+        return configFactory.getConfiguration(source);
     }
 
     @Override
     public String[] getSupportedTypes() {
         return SUFFIXES;
+    }
+
+    private static class Factory extends ConfigurationFactory {
+
+        private Configuration getConfiguration() {
+            ClassLoader loader = LoaderUtil.getThreadContextClassLoader();
+            ConfigurationSource source;
+            String fileName;
+
+            fileName = this.substitutor.replace(PropertiesUtil.getProperties().getStringProperty(CONFIGURATION_FILE_PROPERTY));
+            if (null == fileName) fileName = this.substitutor.replace(PropertiesUtil.getProperties().getStringProperty("conf"));
+
+            source = (fileName == null) ? null : this.getInputFromUri(NetUtils.toURI(fileName));
+
+            if (source == null) {
+                source = this.getInputFromResource(DEFAULT_PREFIX + ".edn", loader);
+                if (null == source) source = this.getInputFromResource("config.edn", loader);
+            }
+            return (source == null) ? null : getConfiguration(source);
+        }
+
+        @Override
+        public Configuration getConfiguration(final String name, final URI configLocation) {
+            if (!isActive()) return null;
+            return getConfiguration();
+        }
+
+        @Override
+        public String[] getSupportedTypes() {
+            return null;
+        }
+
+        @Override
+        public Configuration getConfiguration(final ConfigurationSource source) {
+            if (!isActive()) return null;
+            return new EDNConfiguration(source);
+        }
     }
 }
