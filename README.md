@@ -14,15 +14,30 @@ The logging configruation must be present under the `:logger` key in the EDN fil
 ```clojure
 {:logger
  {:configuration
-  {:name "RoutingTest"
-   :properties {:property
-                {:name "filename"
-                 :value "./rolling/rollingtest-$${sd:type}.log"}}
+  {:name "DefaultConfig"
    :ThresholdFilter {:level "debug"}
-   :appenders {:Console {:name "STDOUT"
-                         :PatternLayout {:pattern "[%d][%p][%c] %m%n"}}}
-   :loggers {:root {:level "info"
-                    :AppenderRef {:ref "STDOUT"}}}}}}
+   :appenders
+   {:appender
+    [{:type "Console"
+      :name "Console"
+      :target "SYSTEM_OUT"
+      :PatternLayout {:pattern "[%d][%p][%c] %m%n"}}
+     {:type "RollingFile"
+      :name "File"
+      :fileName "./log/myapp.log"
+      :filePattern "./log/myapp-%d{MM-dd-yyyy}-%i.log.gz"
+      :PatternLayout {:pattern "[%d][%p][%c] %m%n"}
+      :Policies
+      {:SizeBasedTriggeringPolicy {:size "10 MB"}
+       :DefaultRolloverStrategy {:max "10"}}}]}
+   :loggers {:logger
+             [{:name "org.xnio.nio"
+               :level "warn"}]
+             :root {:level "info"
+                    :AppenderRef
+                    [{:ref "Console"}
+                     {:ref "File"}]}}}}}
+
 ```
 
 The EDN under the `:logger` key is converted to JSON and follows log4j JSON configuration format.
