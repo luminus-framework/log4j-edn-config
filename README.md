@@ -27,9 +27,9 @@ The logging configruation must be present under the `:logger` key in the EDN fil
       :fileName "./log/myapp.log"
       :filePattern "./log/myapp-%d{MM-dd-yyyy}-%i.log.gz"
       :PatternLayout {:pattern "[%d][%p][%c] %m%n"}
+      :DefaultRolloverStrategy {:max "10"}
       :Policies
-      {:SizeBasedTriggeringPolicy {:size "10 MB"}
-       :DefaultRolloverStrategy {:max "10"}}}]}
+      {:SizeBasedTriggeringPolicy {:size "10 MB"}}}]}
    :loggers {:logger
              [{:name "org.xnio.nio"
                :level "warn"}]
