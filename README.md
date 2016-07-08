@@ -7,7 +7,7 @@ A Clojure library designed to provide EDN configuration support for log4j2
 
 [![Clojars Project](https://img.shields.io/clojars/v/log4j-edn-config.svg)](https://clojars.org/log4j-edn-config)
 
-** warning ** Log4j plugins are not compatible with uberjars, log4j generates a plugin dat file, and only a single file can be present on the classpath, when multiple ones are present, then you'll end up with unexpected behaviors. Maven provides a [plugin](https://stackoverflow.com/questions/25065580/log4j2-custom-plugins-annotation-processing-with-maven-assembly-plugin) for handling the issue, however there's no way to do that via Leiningen at the moment.
+**warning** Log4j plugins are not compatible with uberjars, log4j generates a plugin dat file, and only a single file can be present on the classpath, when multiple ones are present, then you'll end up with unexpected behaviors. Maven provides a [plugin](https://stackoverflow.com/questions/25065580/log4j2-custom-plugins-annotation-processing-with-maven-assembly-plugin) for handling the issue, however there's no way to do that via Leiningen at the moment.
 
 Include the dependency in the project, log4j will pick it and allow using `.edn` files for configuraiton.
 The logging configruation must be present under the `:logger` key in the EDN file, e.g:
