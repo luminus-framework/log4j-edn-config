@@ -14,34 +14,46 @@
  * See the license for the specific language governing permissions and
  * limitations under the license.
  */
-package log4j.edn.config;
+package org.apache.logging.log4j.core.config;
 
-import org.apache.logging.log4j.core.config.*;
 import org.apache.logging.log4j.core.config.plugins.Plugin;
 import org.apache.logging.log4j.core.util.Loader;
 import org.apache.logging.log4j.core.util.NetUtils;
 import org.apache.logging.log4j.util.LoaderUtil;
 import org.apache.logging.log4j.util.PropertiesUtil;
+
 import java.net.URI;
+import java.util.List;
 
 @Plugin(name = "EDNConfigurationFactory", category = ConfigurationFactory.CATEGORY)
-@Order(6)
+@Order(7)
 public class EDNConfigurationFactory extends ConfigurationFactory {
 
     private static ConfigurationFactory configFactory = new Factory();
-
+    protected static final String ALT_CONFIG_NAME = "config.edn";
+    protected static final String ALT_CONFIG_PROP_NAME = "conf";
     /**
      * The file extensions supported by this factory.
      */
-    private static final String[] SUFFIXES = new String[] {".edn"};
+    private static final String[] SUFFIXES = new String[]{".edn"};
 
-    private static final String[] dependencies = new String[] {
+    private static final String[] dependencies = new String[]{
             "com.fasterxml.jackson.databind.ObjectMapper",
             "com.fasterxml.jackson.databind.JsonNode",
             "com.fasterxml.jackson.core.JsonParser"
     };
 
     private final boolean isActive;
+
+    private boolean isAltConfigFile() {
+        ClassLoader loader = LoaderUtil.getThreadContextClassLoader();
+        return null != loader.getResource(ALT_CONFIG_NAME);
+
+    }
+
+    private boolean isAltConfigProp() {
+        return null != this.substitutor.replace(PropertiesUtil.getProperties().getStringProperty(ALT_CONFIG_PROP_NAME));
+    }
 
     public EDNConfigurationFactory() {
         for (final String dependency : dependencies) {
@@ -51,7 +63,11 @@ public class EDNConfigurationFactory extends ConfigurationFactory {
                 return;
             }
         }
-        ConfigurationFactory.setConfigurationFactory(configFactory);
+
+        if (isAltConfigProp() || isAltConfigFile()) {
+            ConfigurationFactory.setConfigurationFactory(configFactory);
+        }
+
         isActive = true;
     }
 
@@ -69,6 +85,13 @@ public class EDNConfigurationFactory extends ConfigurationFactory {
     }
 
     @Override
+    public Configuration getConfiguration(final String name, final URI configLocation) {
+        if (!isActive()) return null;
+        return configFactory.getConfiguration(name, configLocation);
+    }
+
+
+    @Override
     public String[] getSupportedTypes() {
         return SUFFIXES;
     }
@@ -81,13 +104,14 @@ public class EDNConfigurationFactory extends ConfigurationFactory {
             String fileName;
 
             fileName = this.substitutor.replace(PropertiesUtil.getProperties().getStringProperty(CONFIGURATION_FILE_PROPERTY));
-            if (null == fileName) fileName = this.substitutor.replace(PropertiesUtil.getProperties().getStringProperty("conf"));
+            if (null == fileName)
+                fileName = this.substitutor.replace(PropertiesUtil.getProperties().getStringProperty(ALT_CONFIG_PROP_NAME));
 
             source = (fileName == null) ? null : this.getInputFromUri(NetUtils.toURI(fileName));
 
             if (source == null) {
                 source = this.getInputFromResource(DEFAULT_PREFIX + ".edn", loader);
-                if (null == source) source = this.getInputFromResource("config.edn", loader);
+                if (null == source) source = this.getInputFromResource(ALT_CONFIG_NAME, loader);
             }
             return (source == null) ? null : getConfiguration(source);
         }
@@ -100,7 +124,7 @@ public class EDNConfigurationFactory extends ConfigurationFactory {
 
         @Override
         public String[] getSupportedTypes() {
-            return null;
+            return SUFFIXES;
         }
 
         @Override
